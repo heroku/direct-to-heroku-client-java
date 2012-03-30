@@ -1,4 +1,4 @@
-package com.herokuapp.warpath;
+package com.herokuapp.directto.client;
 
 import org.junit.Test;
 

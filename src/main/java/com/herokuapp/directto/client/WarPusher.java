@@ -1,4 +1,4 @@
-package com.herokuapp.warpath;
+package com.herokuapp.directto.client;
 
 import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import org.apache.http.HttpResponse;
@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  */
 public class WarPusher {
 
-    public static final String DEFAULT_WARPATH_SERVICE_URI = "http://warpath.herokuapp.com/push";
+    public static final String DEFAULT_WARPATH_SERVICE_URI = "http://directto.herokuapp.com/push";
     public static final Pattern SUCCESSFUL_PUSH_PATTERN = Pattern.compile("Created new Slug based tomcat runner release v\\d+ for app [a-z0-9\\-]+.*");
 
     private final String apiKey;

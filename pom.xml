@@ -4,12 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>heroku-warpath-jar</groupId>
-    <artifactId>heroku-warpath-jar</artifactId>
+    <groupId>com.herokuapp.directto</groupId>
+    <artifactId>direct-to-heroku-client</artifactId>
     <version>0.1-SNAPSHOT</version>
 
     <properties>
-        <com.heroku.api.version>0.5-SNAPSHOT</com.heroku.api.version>
+        <com.heroku.api.version>0.5</com.heroku.api.version>
         <apache.commons-httpclient.version>4.1.2</apache.commons-httpclient.version>
     </properties>
 
@@ -24,6 +24,17 @@
             <artifactId>httpmime</artifactId>
             <version>${apache.commons-httpclient.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+            <version>1.8</version>
+        </dependency>
+
 
         <!-- Test Dependecies -->
         <dependency>
