@@ -48,4 +48,17 @@ public class DirectToHerokuClientTest {
 
         assertEquals("success", client.deploy("war", appName, files).get("status"));
     }
+
+    @Test
+    public void testAsyncDeploy() throws Exception {
+        final File warFile = new File(warFilePath);
+        assertTrue("Precondition", warFile.exists());
+
+        final Map<String, File> files = new HashMap<String, File>(1);
+        files.put("war", warFile);
+
+        assertEquals("success", client.deployAsync("war", appName, files).get().get("status"));
+    }
+
+
 }
