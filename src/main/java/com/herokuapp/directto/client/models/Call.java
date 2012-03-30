@@ -2,12 +2,9 @@ package com.herokuapp.directto.client.models;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
  * @author Ryan Brainard
  */
-@XmlRootElement
 public class Call {
 
     @JsonProperty
