@@ -10,20 +10,9 @@
 
     <properties>
         <com.sun.jersey.version>1.8</com.sun.jersey.version>
-        <apache.commons-httpclient.version>4.1.2</apache.commons-httpclient.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${apache.commons-httpclient.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpmime</artifactId>
-            <version>${apache.commons-httpclient.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
