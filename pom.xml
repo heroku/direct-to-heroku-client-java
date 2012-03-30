@@ -6,10 +6,10 @@
 
     <groupId>com.herokuapp.directto</groupId>
     <artifactId>direct-to-heroku-client</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2-SNAPSHOT</version>
 
     <properties>
-        <com.heroku.api.version>0.5</com.heroku.api.version>
+        <com.sun.jersey.version>1.8</com.sun.jersey.version>
         <apache.commons-httpclient.version>4.1.2</apache.commons-httpclient.version>
     </properties>
 
@@ -27,39 +27,20 @@
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
-            <version>1.8</version>
+            <version>${com.sun.jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-json</artifactId>
-            <version>1.8</version>
+            <version>${com.sun.jersey.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey.contribs</groupId>
             <artifactId>jersey-multipart</artifactId>
-            <version>1.8</version>
+            <version>${com.sun.jersey.version}</version>
         </dependency>
-
 
         <!-- Test Dependecies -->
-        <dependency>
-            <groupId>com.heroku.api</groupId>
-            <artifactId>heroku-api</artifactId>
-            <version>${com.heroku.api.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.heroku.api</groupId>
-            <artifactId>heroku-json-jackson</artifactId>
-            <version>${com.heroku.api.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.heroku.api</groupId>
-            <artifactId>heroku-http-apache</artifactId>
-            <version>${com.heroku.api.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

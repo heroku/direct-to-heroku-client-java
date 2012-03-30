@@ -20,7 +20,6 @@ public class DirectToHerokuClientTest {
     private final String appName = System.getProperty("heroku.appName");
     private final String warFilePath = System.getProperty("heroku.warFile");
     private final DirectToHerokuClient client = new DirectToHerokuClient("http", "direct-to.herokuapp.com", 80, apiKey);
-//    private final DirectToHerokuClient client = new DirectToHerokuClient("http", "localhost", 8080, apiKey);
 
     @Test
     public void testGetPipelineNames() throws Exception {

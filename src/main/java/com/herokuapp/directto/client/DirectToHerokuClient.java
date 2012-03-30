@@ -22,7 +22,6 @@ import java.util.Map;
 public class DirectToHerokuClient {
 
     private final WebResource baseResource;
-    private Map<String, Pipeline> base;
 
     public DirectToHerokuClient(String apiKey) {
         this("http", "direct-to.herokuapp.com", 80, apiKey);
@@ -59,12 +58,13 @@ public class DirectToHerokuClient {
 
         final WebResource pollingRequest = baseResource.path(deployResponse.getHeaders().get("Location").get(0));
         Map response = deployResponse.getEntity(Map.class);
+        long pollingInterval = 1000L;
         while (response.get("status").equals("inprocess")) {
             response = pollingRequest.get(Map.class);
-            Thread.sleep(1000);
+            Thread.sleep(pollingInterval *= 1.5);
         }
 
         //noinspection unchecked
-        return (Map<String, String>) response;
+        return response;
     }
 }
