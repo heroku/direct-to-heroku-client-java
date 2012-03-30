@@ -3,7 +3,10 @@ package com.herokuapp.directto.client;
 import com.herokuapp.directto.client.models.Pipeline;
 import org.junit.Test;
 
+import java.util.Collection;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Ryan Brainard
@@ -14,6 +17,13 @@ public class DirectToHerokuClientTest {
     private final String appName = System.getProperty("heroku.appName");
     private final String warFile = System.getProperty("heroku.warFile");
     private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
+
+    @Test
+    public void testGetPipelineNames() throws Exception {
+        final Collection<String> pipelineNames = client.getPipelineNames();
+        assertTrue(pipelineNames.contains("war"));
+        assertTrue(pipelineNames.contains("fatjar"));
+    }
 
     @Test
     public void testGetPipeline() throws Exception {

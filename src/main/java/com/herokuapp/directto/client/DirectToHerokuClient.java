@@ -7,6 +7,9 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 
+import java.util.Collection;
+import java.util.Map;
+
 /**
  * @author Ryan Brainard
  */
@@ -14,6 +17,7 @@ public class DirectToHerokuClient {
 
     private final String apiKey;
     private final WebResource baseResource;
+    private Map<String, Pipeline> base;
 
     public DirectToHerokuClient(String apiKey) {
         this.apiKey = apiKey;
@@ -25,8 +29,16 @@ public class DirectToHerokuClient {
         baseResource = jerseyClient.resource("http://direct-to.herokuapp.com");
     }
 
+    @SuppressWarnings("unchecked")
+    Collection<String> getPipelineNames() {
+        return baseResource.path("/pipelines").get(Map.class).keySet();
+    }
+
     Pipeline getPipeline(String pipelineName) {
         return baseResource.path("/pipelines/" + pipelineName).get(Pipeline.class);
     }
 
+//    public Map<String,Pipeline> getPipelines() {
+//        return base;
+//    }
 }
