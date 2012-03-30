@@ -1,5 +1,7 @@
 package com.herokuapp.directto.client.models;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Map;
 
@@ -9,8 +11,10 @@ import java.util.Map;
 @XmlRootElement
 public class Manifest {
 
-    public String description;
-    public Map<String, String> requiredFileInfo;
+    @JsonProperty
+    private String description;
+    @JsonProperty
+    private Map<String, String> requiredFileInfo;
 
     public String getDescription() {
         return description;

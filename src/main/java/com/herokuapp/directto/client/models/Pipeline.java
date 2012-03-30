@@ -1,5 +1,7 @@
 package com.herokuapp.directto.client.models;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -8,9 +10,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Pipeline {
 
-    public String name;
-    public Call call;
-    public Manifest manifest;
+    @JsonProperty
+    private String name;
+    @JsonProperty
+    private Call call;
+    @JsonProperty
+    private Manifest manifest;
 
     public String getName() {
         return name;

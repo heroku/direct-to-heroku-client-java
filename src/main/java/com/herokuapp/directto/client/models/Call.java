@@ -1,5 +1,7 @@
 package com.herokuapp.directto.client.models;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -8,8 +10,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Call {
 
-    public String method;
-    public String url;
+    @JsonProperty
+    private String method;
+    @JsonProperty
+    private String url;
 
     public String getMethod() {
         return method;
