@@ -3,7 +3,10 @@ package com.herokuapp.directto.client;
 import com.herokuapp.directto.client.models.Pipeline;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -15,8 +18,9 @@ public class DirectToHerokuClientTest {
 
     private final String apiKey = System.getProperty("heroku.apiKey");
     private final String appName = System.getProperty("heroku.appName");
-    private final String warFile = System.getProperty("heroku.warFile");
-    private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
+    private final String warFilePath = System.getProperty("heroku.warFile");
+    private final DirectToHerokuClient client = new DirectToHerokuClient("http", "direct-to.herokuapp.com", 80, apiKey);
+//    private final DirectToHerokuClient client = new DirectToHerokuClient("http", "localhost", 8080, apiKey);
 
     @Test
     public void testGetPipelineNames() throws Exception {
@@ -37,8 +41,12 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testDeploy() throws Exception {
-//        final Map<String, File> files = new HashMap<String, File>(1);
-//        files.put("war", new File(warFile));
-//        assertEquals("success", client.deploy("war", appName, files).get("status"));
+        final File warFile = new File(warFilePath);
+        assertTrue("Precondition", warFile.exists());
+
+        final Map<String, File> files = new HashMap<String, File>(1);
+        files.put("war", warFile);
+
+        assertEquals("success", client.deploy("war", appName, files).get("status"));
     }
 }
