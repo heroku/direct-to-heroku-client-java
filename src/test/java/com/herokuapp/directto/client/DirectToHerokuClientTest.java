@@ -60,24 +60,38 @@ public class DirectToHerokuClientTest {
     }
 
     @Test
-    public void testVerify_InvalidAppName() throws Exception {
+    public void testVerify_Pass() throws Exception {
+        final File warFile = new File(warFilePath);
+        assertTrue("Precondition", warFile.exists());
+
+        final Map<String, File> files = new HashMap<String, File>(1);
+        files.put("war", warFile);
+
+        client.verify("war", appName, files);
+    }
+
+    @Test
+    public void testVerify_InvalidPipelineName() throws Exception {
         try {
-            client.verify("BLAH", null);
+            client.verify("BLAH", "anApp", null);
             fail();
-        } catch (IllegalArgumentException e) {
-            assertEquals("Invalid pipeline name: BLAH", e.getMessage());
+        } catch (VerificationException e) {
+            assertEquals("[Invalid pipeline name: BLAH]", e.getMessage());
         }
     }
 
     @Test
-    public void testVerify_MissingFiles() throws Exception {
+    public void testVerify_InvalidMisc() throws Exception {
+        final HashMap<String, File> files = new HashMap<String, File>();
+        files.put("meaningless", new File("i'm not really here"));
         try {
-            client.verify("fatjar", new HashMap<String, File>());
+            client.verify("fatjar", "", files);
             fail();
-        } catch (IllegalArgumentException e) {
-            assertEquals("Missing required files: \n" +
-                    " - procfile: The Procfile\n" +
-                    " - jar: the fat jar",
+        } catch (VerificationException e) {
+            assertEquals("[App name must be populated, " +
+                    "Required file not specified: jar (the fat jar), " +
+                    "Required file not specified: procfile (The Procfile), " +
+                    "File not found for: meaningless (i'm not really here)]",
                     e.getMessage());
         }
     }

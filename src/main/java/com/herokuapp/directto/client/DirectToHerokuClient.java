@@ -15,7 +15,6 @@ import com.sun.jersey.multipart.file.FileDataBodyPart;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -58,35 +57,46 @@ public class DirectToHerokuClient {
         return baseResource.path("/pipelines/" + pipelineName).get(Pipeline.class);
     }
 
-    public void verify(String pipelineName, Map<String, File> files) throws IllegalArgumentException {
-        final Pipeline pipeline;
+    /**
+     * Client side, pre-deployment verification of payload for deployment with a pipeline
+     *
+     * @throws VerificationException when a verification issue is found
+     */
+    public void verify(String pipelineName, String appName, Map<String, File> files) throws VerificationException {
+        final VerificationException.Aggregator problems = new VerificationException.Aggregator();
+
+        if (appName == null || appName.trim().equals("")) {
+            problems.addMessage("App name must be populated");
+        }
+
+        Pipeline pipeline = null;
         try {
             pipeline = getPipeline(pipelineName);
         } catch (UniformInterfaceException e) {
-            throw new IllegalArgumentException("Invalid pipeline name: " + pipelineName);
+            problems.addMessage("Invalid pipeline name: " + pipelineName).detonate();
         }
 
-        final Map<String, String> missingRequiredFiles = new HashMap<String, String>();
         for (Map.Entry<String, String> requiredFile : pipeline.getManifest().getRequiredFileInfo().entrySet()) {
             if (!files.containsKey(requiredFile.getKey())) {
-                missingRequiredFiles.put(requiredFile.getKey(), requiredFile.getValue());
+                problems.addMessage("Required file not specified: " + requiredFile.getKey() + " (" + requiredFile.getValue() + ")");
             }
         }
 
-        if (!missingRequiredFiles.isEmpty()) {
-            final StringBuilder msg = new StringBuilder("Missing required files: ");
-            for (Map.Entry<String, String> missingRequiredFile : missingRequiredFiles.entrySet()) {
-                msg.append("\n - ").append(missingRequiredFile.getKey()).append(": ").append(missingRequiredFile.getValue());
+        for (Map.Entry<String, File> file : files.entrySet()) {
+            if (file.getValue() == null || !file.getValue().exists()) {
+                problems.addMessage("File not found for: " + file.getKey() + " (" + file.getValue() + ")");
             }
-
-            throw new IllegalArgumentException(msg.toString());
         }
+
+        problems.detonate();
     }
 
     /**
      * Deploys a bundle of files to an app name using a given pipeline.
      * <p/>
-     * Note, this call blocks until the remote job is no longer in progress without any timeout.
+     * Consider calling {@link #verify} prior to calling this method for client-side verification.
+     * <p/>
+     * This call blocks until the remote job is no longer in progress without any timeout.
      * If you want to enforce a timeout, use {@link #deployAsync} and call
      * {@link Future#get(long, java.util.concurrent.TimeUnit)}.
      *
