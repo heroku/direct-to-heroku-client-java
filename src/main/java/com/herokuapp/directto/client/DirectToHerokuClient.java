@@ -3,6 +3,7 @@ package com.herokuapp.directto.client;
 import com.herokuapp.directto.client.models.Pipeline;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
@@ -14,6 +15,7 @@ import com.sun.jersey.multipart.file.FileDataBodyPart;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +56,31 @@ public class DirectToHerokuClient {
      */
     public Pipeline getPipeline(String pipelineName) {
         return baseResource.path("/pipelines/" + pipelineName).get(Pipeline.class);
+    }
+
+    public void verify(String pipelineName, Map<String, File> files) throws IllegalArgumentException {
+        final Pipeline pipeline;
+        try {
+            pipeline = getPipeline(pipelineName);
+        } catch (UniformInterfaceException e) {
+            throw new IllegalArgumentException("Invalid pipeline name: " + pipelineName);
+        }
+
+        final Map<String, String> missingRequiredFiles = new HashMap<String, String>();
+        for (Map.Entry<String, String> requiredFile : pipeline.getManifest().getRequiredFileInfo().entrySet()) {
+            if (!files.containsKey(requiredFile.getKey())) {
+                missingRequiredFiles.put(requiredFile.getKey(), requiredFile.getValue());
+            }
+        }
+
+        if (!missingRequiredFiles.isEmpty()) {
+            final StringBuilder msg = new StringBuilder("Missing required files: ");
+            for (Map.Entry<String, String> missingRequiredFile : missingRequiredFiles.entrySet()) {
+                msg.append("\n - ").append(missingRequiredFile.getKey()).append(": ").append(missingRequiredFile.getValue());
+            }
+
+            throw new IllegalArgumentException(msg.toString());
+        }
     }
 
     /**

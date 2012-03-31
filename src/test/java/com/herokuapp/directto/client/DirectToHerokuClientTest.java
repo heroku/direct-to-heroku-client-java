@@ -8,8 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Ryan Brainard
@@ -60,5 +59,27 @@ public class DirectToHerokuClientTest {
         assertEquals("success", client.deployAsync("war", appName, files).get().get("status"));
     }
 
+    @Test
+    public void testVerify_InvalidAppName() throws Exception {
+        try {
+            client.verify("BLAH", null);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("Invalid pipeline name: BLAH", e.getMessage());
+        }
+    }
 
+    @Test
+    public void testVerify_MissingFiles() throws Exception {
+        try {
+            client.verify("fatjar", new HashMap<String, File>());
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("Missing required files: \n" +
+                    " - procfile: The Procfile\n" +
+                    " - jar: the fat jar",
+                    e.getMessage());
+        }
+    }
 }
+
