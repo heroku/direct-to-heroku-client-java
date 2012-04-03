@@ -1,15 +1,18 @@
 package com.herokuapp.directto.client;
 
 import com.herokuapp.directto.client.models.Pipeline;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Ryan Brainard
@@ -24,10 +27,8 @@ public class DirectToHerokuClientTest {
     private final String warFilePath = System.getProperty("heroku.warFile");
     private final DirectToHerokuClient client = new DirectToHerokuClient("http", "direct-to.herokuapp.com", 80, apiKey);
 
-    @Before
-    public void setUp() {
-
-    }
+    @Rule
+    public final ExpectedException exceptionRule = ExpectedException.none();
 
     @Test
     public void testGetPipelineNames() throws Exception {
@@ -48,12 +49,28 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testDeploy() throws Exception {
-        assertEquals("success", client.deploy(WAR_PIPELINE, appName, createWarBundle()).get("status"));
+        assertEquals(DirectToHerokuClient.STATUS_SUCCESS, client.deploy(WAR_PIPELINE, appName, createWarBundle()).get("status"));
     }
 
     @Test
     public void testAsyncDeploy() throws Exception {
-        assertEquals("success", client.deployAsync(WAR_PIPELINE, appName, createWarBundle()).get().get("status"));
+        assertEquals(DirectToHerokuClient.STATUS_SUCCESS, client.deployAsync(WAR_PIPELINE, appName, createWarBundle()).get().get("status"));
+    }
+
+    @Test
+    public void testDeploy_NoAccessToApp() throws Exception {
+        exceptionRule.expect(DeploymentException.class);
+        exceptionRule.expectMessage("not part of app");
+        client.deploy(WAR_PIPELINE, UUID.randomUUID().toString(), createWarBundle());
+    }
+
+    @Test
+    public void testDeploy_BadResponse() throws Exception {
+        final DirectToHerokuClient badClient = new DirectToHerokuClient("http", "example.com", 80, apiKey);
+
+        exceptionRule.expect(DeploymentException.class);
+        exceptionRule.expectMessage("Deploy not accepted");
+        badClient.deploy(WAR_PIPELINE, appName, createWarBundle());
     }
 
     @Test
@@ -63,28 +80,22 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testVerify_InvalidPipelineName() throws Exception {
-        try {
-            client.verify("BLAH", "anApp", null);
-            fail();
-        } catch (VerificationException e) {
-            assertEquals("[Invalid pipeline name: BLAH]", e.getMessage());
-        }
+        exceptionRule.expect(VerificationException.class);
+        exceptionRule.expectMessage("[Invalid pipeline name");
+        client.verify("BAD_PIPELINE_NAME", "anApp", createWarBundle());
     }
 
     @Test
     public void testVerify_InvalidMisc() throws Exception {
         final HashMap<String, File> files = new HashMap<String, File>();
         files.put("meaningless", new File("i'm not really here"));
-        try {
-            client.verify("fatjar", "", files);
-            fail();
-        } catch (VerificationException e) {
-            assertEquals("[App name must be populated, " +
-                    "Required file not specified: jar (the fat jar), " +
-                    "Required file not specified: procfile (The Procfile), " +
-                    "File not found for: meaningless (i'm not really here)]",
-                    e.getMessage());
-        }
+
+        exceptionRule.expect(VerificationException.class);
+        exceptionRule.expectMessage("App name must be populated");
+        exceptionRule.expectMessage("Required file not specified: jar (the fat jar)");
+        exceptionRule.expectMessage("Required file not specified: procfile (The Procfile)");
+        exceptionRule.expectMessage("File not found for: meaningless (i'm not really here)");
+        client.verify("fatjar", "", files);
     }
 
     private Map<String, File> createWarBundle() {

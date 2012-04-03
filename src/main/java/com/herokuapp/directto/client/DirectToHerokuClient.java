@@ -14,7 +14,9 @@ import com.sun.jersey.multipart.file.FileDataBodyPart;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.net.HttpURLConnection;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +27,10 @@ import java.util.concurrent.Future;
  * @author Ryan Brainard
  */
 public class DirectToHerokuClient {
+
+    public static final String STATUS = "status";
+    public static final String STATUS_SUCCESS = "success";
+    public static final String STATUS_IN_PROCESS = "inprocess";
 
     private final WebResource baseResource;
 
@@ -104,8 +110,9 @@ public class DirectToHerokuClient {
      * @param appName      app to which to deploy
      * @param files        bundle of files to deploy matching the pipeline
      * @return results from remote service
+     * @throws DeploymentException if
      */
-    public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files) {
+    public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files) throws DeploymentException {
         final WebResource deployRequest = baseResource.path("/direct/" + appName + "/" + pipelineName);
 
         final FormDataMultiPart form = new FormDataMultiPart();
@@ -114,17 +121,31 @@ public class DirectToHerokuClient {
         }
 
         final ClientResponse deployResponse = deployRequest.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, form);
+        if (HttpURLConnection.HTTP_ACCEPTED != deployResponse.getStatus()) {
+            throw new DeploymentException("Deploy not accepted");
+        }
 
-        final WebResource pollingRequest = baseResource.path(deployResponse.getHeaders().get("Location").get(0));
+        final List<String> locationHeaders = deployResponse.getHeaders().get("Location");
+        if (locationHeaders == null || locationHeaders.get(0) == null) {
+            throw new DeploymentException("Location header not found");
+        }
+        final String location = locationHeaders.get(0);
+
+        final WebResource pollingRequest = baseResource.path(location);
         Map response = deployResponse.getEntity(Map.class);
         long pollingInterval = 1000L;
-        while (response.get("status").equals("inprocess")) {
+        while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
             response = pollingRequest.get(Map.class);
             try {
                 Thread.sleep(pollingInterval *= 1.5);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        if (!STATUS_SUCCESS.equals(response.get(STATUS))) {
+            final String unsuccessfulMsg = response.get("status") + ":" + response.get("message");
+            throw new DeploymentException(unsuccessfulMsg, response.toString());
         }
 
         //noinspection unchecked
@@ -146,4 +167,5 @@ public class DirectToHerokuClient {
             executorService.shutdown();
         }
     }
+
 }
