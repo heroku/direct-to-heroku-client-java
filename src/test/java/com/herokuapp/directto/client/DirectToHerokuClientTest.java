@@ -6,11 +6,9 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
+import static com.herokuapp.directto.client.DirectToHerokuClient.STATUS_SUCCESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -25,6 +23,7 @@ public class DirectToHerokuClientTest {
     private final String apiKey = System.getProperty("heroku.apiKey");
     private final String appName = System.getProperty("heroku.appName");
     private final String warFilePath = System.getProperty("heroku.warFile");
+    private final Map<String, File> warBundle = createWarBundle(warFilePath);
     private final DirectToHerokuClient client = new DirectToHerokuClient("http", "direct-to.herokuapp.com", 80, apiKey);
 
     @Rule
@@ -49,19 +48,19 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testDeploy() throws Exception {
-        assertEquals(DirectToHerokuClient.STATUS_SUCCESS, client.deploy(WAR_PIPELINE, appName, createWarBundle()).get("status"));
+        assertEquals(STATUS_SUCCESS, client.deploy(WAR_PIPELINE, appName, warBundle).get(STATUS_SUCCESS));
     }
 
     @Test
     public void testAsyncDeploy() throws Exception {
-        assertEquals(DirectToHerokuClient.STATUS_SUCCESS, client.deployAsync(WAR_PIPELINE, appName, createWarBundle()).get().get("status"));
+        assertEquals(STATUS_SUCCESS, client.deployAsync(WAR_PIPELINE, appName, warBundle).get().get(STATUS_SUCCESS));
     }
 
     @Test
     public void testDeploy_NoAccessToApp() throws Exception {
         exceptionRule.expect(DeploymentException.class);
         exceptionRule.expectMessage("not part of app");
-        client.deploy(WAR_PIPELINE, UUID.randomUUID().toString(), createWarBundle());
+        client.deploy(WAR_PIPELINE, UUID.randomUUID().toString(), warBundle);
     }
 
     @Test
@@ -70,19 +69,19 @@ public class DirectToHerokuClientTest {
 
         exceptionRule.expect(DeploymentException.class);
         exceptionRule.expectMessage("Deploy not accepted");
-        badClient.deploy(WAR_PIPELINE, appName, createWarBundle());
+        badClient.deploy(WAR_PIPELINE, appName, warBundle);
     }
 
     @Test
     public void testVerify_Pass() throws Exception {
-        client.verify(WAR_PIPELINE, appName, createWarBundle());
+        client.verify(WAR_PIPELINE, appName, warBundle);
     }
 
     @Test
     public void testVerify_InvalidPipelineName() throws Exception {
         exceptionRule.expect(VerificationException.class);
         exceptionRule.expectMessage("[Invalid pipeline name");
-        client.verify("BAD_PIPELINE_NAME", "anApp", createWarBundle());
+        client.verify("BAD_PIPELINE_NAME", "anApp", createWarBundle(warFilePath));
     }
 
     @Test
@@ -98,13 +97,14 @@ public class DirectToHerokuClientTest {
         client.verify("fatjar", "", files);
     }
 
-    private Map<String, File> createWarBundle() {
+    private Map<String, File> createWarBundle(String warFilePath) {
         final File warFile = new File(warFilePath);
         assertTrue("Precondition", warFile.exists());
 
         final Map<String, File> files = new HashMap<String, File>(1);
         files.put("war", warFile);
-        return files;
+
+        return Collections.unmodifiableMap(files);
     }
 }
 
