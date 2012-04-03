@@ -8,6 +8,7 @@ import org.junit.rules.ExpectedException;
 import java.io.File;
 import java.util.*;
 
+import static com.herokuapp.directto.client.DirectToHerokuClient.STATUS;
 import static com.herokuapp.directto.client.DirectToHerokuClient.STATUS_SUCCESS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -24,7 +25,7 @@ public class DirectToHerokuClientTest {
     private final String appName = System.getProperty("heroku.appName");
     private final String warFilePath = System.getProperty("heroku.warFile");
     private final Map<String, File> warBundle = createWarBundle(warFilePath);
-    private final DirectToHerokuClient client = new DirectToHerokuClient("http", "direct-to.herokuapp.com", 80, apiKey);
+    private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
 
     @Rule
     public final ExpectedException exceptionRule = ExpectedException.none();
@@ -48,12 +49,12 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testDeploy() throws Exception {
-        assertEquals(STATUS_SUCCESS, client.deploy(WAR_PIPELINE, appName, warBundle).get(STATUS_SUCCESS));
+        assertEquals(STATUS_SUCCESS, client.deploy(WAR_PIPELINE, appName, warBundle).get(STATUS));
     }
 
     @Test
     public void testAsyncDeploy() throws Exception {
-        assertEquals(STATUS_SUCCESS, client.deployAsync(WAR_PIPELINE, appName, warBundle).get().get(STATUS_SUCCESS));
+        assertEquals(STATUS_SUCCESS, client.deployAsync(WAR_PIPELINE, appName, warBundle).get().get(STATUS));
     }
 
     @Test

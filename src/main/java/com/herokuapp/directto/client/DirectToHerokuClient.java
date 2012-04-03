@@ -35,7 +35,7 @@ public class DirectToHerokuClient {
     private final WebResource baseResource;
 
     public DirectToHerokuClient(String apiKey) {
-        this("http", "direct-to.herokuapp.com", 80, apiKey);
+        this("https", "direct-to.herokuapp.com", 443, apiKey);
     }
 
     DirectToHerokuClient(String scheme, String host, int port, String apiKey) {
