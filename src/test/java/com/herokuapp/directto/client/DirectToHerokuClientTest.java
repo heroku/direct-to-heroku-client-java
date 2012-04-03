@@ -1,6 +1,7 @@
 package com.herokuapp.directto.client;
 
 import com.herokuapp.directto.client.models.Pipeline;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -15,22 +16,30 @@ import static org.junit.Assert.*;
  */
 public class DirectToHerokuClientTest {
 
+    public static final String WAR_PIPELINE = "war";
+    public static final String FATJAR_PIPELINE = "fatjar";
+
     private final String apiKey = System.getProperty("heroku.apiKey");
     private final String appName = System.getProperty("heroku.appName");
     private final String warFilePath = System.getProperty("heroku.warFile");
     private final DirectToHerokuClient client = new DirectToHerokuClient("http", "direct-to.herokuapp.com", 80, apiKey);
 
+    @Before
+    public void setUp() {
+
+    }
+
     @Test
     public void testGetPipelineNames() throws Exception {
         final Collection<String> pipelineNames = client.getPipelineNames();
-        assertTrue(pipelineNames.contains("war"));
-        assertTrue(pipelineNames.contains("fatjar"));
+        assertTrue(pipelineNames.contains(WAR_PIPELINE));
+        assertTrue(pipelineNames.contains(FATJAR_PIPELINE));
     }
 
     @Test
     public void testGetPipeline() throws Exception {
-        final Pipeline pipeline = client.getPipeline("war");
-        assertEquals("war", pipeline.getName());
+        final Pipeline pipeline = client.getPipeline(WAR_PIPELINE);
+        assertEquals(WAR_PIPELINE, pipeline.getName());
         assertEquals("POST", pipeline.getCall().getMethod());
         assertEquals("/direct/<your app>/war", pipeline.getCall().getUrl());
         assertEquals("Directly deploy a war that will be executed with tomcat runner", pipeline.getManifest().getDescription());
@@ -39,35 +48,17 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testDeploy() throws Exception {
-        final File warFile = new File(warFilePath);
-        assertTrue("Precondition", warFile.exists());
-
-        final Map<String, File> files = new HashMap<String, File>(1);
-        files.put("war", warFile);
-
-        assertEquals("success", client.deploy("war", appName, files).get("status"));
+        assertEquals("success", client.deploy(WAR_PIPELINE, appName, createWarBundle()).get("status"));
     }
 
     @Test
     public void testAsyncDeploy() throws Exception {
-        final File warFile = new File(warFilePath);
-        assertTrue("Precondition", warFile.exists());
-
-        final Map<String, File> files = new HashMap<String, File>(1);
-        files.put("war", warFile);
-
-        assertEquals("success", client.deployAsync("war", appName, files).get().get("status"));
+        assertEquals("success", client.deployAsync(WAR_PIPELINE, appName, createWarBundle()).get().get("status"));
     }
 
     @Test
     public void testVerify_Pass() throws Exception {
-        final File warFile = new File(warFilePath);
-        assertTrue("Precondition", warFile.exists());
-
-        final Map<String, File> files = new HashMap<String, File>(1);
-        files.put("war", warFile);
-
-        client.verify("war", appName, files);
+        client.verify(WAR_PIPELINE, appName, createWarBundle());
     }
 
     @Test
@@ -94,6 +85,15 @@ public class DirectToHerokuClientTest {
                     "File not found for: meaningless (i'm not really here)]",
                     e.getMessage());
         }
+    }
+
+    private Map<String, File> createWarBundle() {
+        final File warFile = new File(warFilePath);
+        assertTrue("Precondition", warFile.exists());
+
+        final Map<String, File> files = new HashMap<String, File>(1);
+        files.put("war", warFile);
+        return files;
     }
 }
 
