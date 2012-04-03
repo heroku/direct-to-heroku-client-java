@@ -18,10 +18,6 @@ import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * @author Ryan Brainard
@@ -31,6 +27,10 @@ public class DirectToHerokuClient {
     public static final String STATUS = "status";
     public static final String STATUS_SUCCESS = "success";
     public static final String STATUS_IN_PROCESS = "inprocess";
+
+    private long pollingIntervalInit = 1000;
+    private double pollingIntervalMultiplier = 1.5;
+    private long pollingTimeout = 10L * 60L * 1000L;
 
     private final WebResource baseResource;
 
@@ -101,10 +101,6 @@ public class DirectToHerokuClient {
      * Deploys a bundle of files to an app name using a given pipeline.
      * <p/>
      * Consider calling {@link #verify} prior to calling this method for client-side verification.
-     * <p/>
-     * This call blocks until the remote job is no longer in progress without any timeout.
-     * If you want to enforce a timeout, use {@link #deployAsync} and call
-     * {@link Future#get(long, java.util.concurrent.TimeUnit)}.
      *
      * @param pipelineName name of the pipeline to use
      * @param appName      app to which to deploy
@@ -131,13 +127,19 @@ public class DirectToHerokuClient {
         }
         final String location = locationHeaders.get(0);
 
+        final long startTime = System.currentTimeMillis();
+        long pollingInterval = pollingIntervalInit;
         final WebResource pollingRequest = baseResource.path(location);
         Map response = deployResponse.getEntity(Map.class);
-        long pollingInterval = 1000L;
         while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
             response = pollingRequest.get(Map.class);
+
+            if (System.currentTimeMillis() - startTime > pollingTimeout) {
+                throw new DeploymentException("Polling timed out after " + pollingInterval + "ms");
+            }
+
             try {
-                Thread.sleep(pollingInterval *= 1.5);
+                Thread.sleep(pollingInterval *= pollingIntervalMultiplier);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -152,20 +154,27 @@ public class DirectToHerokuClient {
         return response;
     }
 
-    /**
-     * Same as @{#deploy}, but launches deployment in a separate thread and returns immediately with a {@link Future} result.
-     */
-    public Future<Map<String, String>> deployAsync(final String pipelineName, final String appName, final Map<String, File> files) {
-        final ExecutorService executorService = Executors.newSingleThreadExecutor();
-        try {
-            return executorService.submit(new Callable<Map<String, String>>() {
-                public Map<String, String> call() throws Exception {
-                    return deploy(pipelineName, appName, files);
-                }
-            });
-        } finally {
-            executorService.shutdown();
-        }
+    public long getPollingIntervalInit() {
+        return pollingIntervalInit;
     }
 
+    public void setPollingIntervalInit(long pollingIntervalInit) {
+        this.pollingIntervalInit = pollingIntervalInit;
+    }
+
+    public double getPollingIntervalMultiplier() {
+        return pollingIntervalMultiplier;
+    }
+
+    public void setPollingIntervalMultiplier(double pollingIntervalMultiplier) {
+        this.pollingIntervalMultiplier = pollingIntervalMultiplier;
+    }
+
+    public long getPollingTimeout() {
+        return pollingTimeout;
+    }
+
+    public void setPollingTimeout(long pollingTimeout) {
+        this.pollingTimeout = pollingTimeout;
+    }
 }

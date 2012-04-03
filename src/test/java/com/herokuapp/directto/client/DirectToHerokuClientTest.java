@@ -53,11 +53,6 @@ public class DirectToHerokuClientTest {
     }
 
     @Test
-    public void testAsyncDeploy() throws Exception {
-        assertEquals(STATUS_SUCCESS, client.deployAsync(WAR_PIPELINE, appName, warBundle).get().get(STATUS));
-    }
-
-    @Test
     public void testDeploy_NoAccessToApp() throws Exception {
         exceptionRule.expect(DeploymentException.class);
         exceptionRule.expectMessage("not part of app");
@@ -71,6 +66,16 @@ public class DirectToHerokuClientTest {
         exceptionRule.expect(DeploymentException.class);
         exceptionRule.expectMessage("Deploy not accepted");
         badClient.deploy(WAR_PIPELINE, appName, warBundle);
+    }
+
+    @Test
+    public void testDeploy_WithoutTimeout() throws Exception {
+        DirectToHerokuClient clientWithShortTimeout = new DirectToHerokuClient(apiKey);
+        clientWithShortTimeout.setPollingTimeout(1);
+
+        exceptionRule.expect(DeploymentException.class);
+        exceptionRule.expectMessage("Polling timed out");
+        clientWithShortTimeout.deploy(WAR_PIPELINE, appName, warBundle);
     }
 
     @Test
