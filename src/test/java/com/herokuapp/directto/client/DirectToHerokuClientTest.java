@@ -23,8 +23,7 @@ public class DirectToHerokuClientTest {
 
     private final String apiKey = System.getProperty("heroku.apiKey");
     private final String appName = System.getProperty("heroku.appName");
-    private final String warFilePath = System.getProperty("heroku.warFile");
-    private final Map<String, File> warBundle = createWarBundle(warFilePath);
+    private final Map<String, File> warBundle = createWarBundle(ClassLoader.getSystemResource("sample-war.war").getPath());
     private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
 
     @Rule
@@ -87,7 +86,7 @@ public class DirectToHerokuClientTest {
     public void testVerify_InvalidPipelineName() throws Exception {
         exceptionRule.expect(VerificationException.class);
         exceptionRule.expectMessage("[Invalid pipeline name");
-        client.verify("BAD_PIPELINE_NAME", "anApp", createWarBundle(warFilePath));
+        client.verify("BAD_PIPELINE_NAME", "anApp", warBundle);
     }
 
     @Test
