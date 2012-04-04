@@ -8,8 +8,7 @@ import org.junit.rules.ExpectedException;
 import java.io.File;
 import java.util.*;
 
-import static com.herokuapp.directto.client.DirectToHerokuClient.STATUS;
-import static com.herokuapp.directto.client.DirectToHerokuClient.STATUS_SUCCESS;
+import static com.herokuapp.directto.client.DirectToHerokuClient.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -86,11 +85,10 @@ public class DirectToHerokuClientTest {
     @Test
     public void testDeploy_WithoutTimeout() throws Exception {
         DirectToHerokuClient clientWithShortTimeout = new DirectToHerokuClient(apiKey);
-        clientWithShortTimeout.setPollingTimeout(1);
 
         exceptions.expect(DeploymentException.class);
         exceptions.expectMessage("Polling timed out");
-        clientWithShortTimeout.deploy(WAR_PIPELINE, appName, warBundle);
+        clientWithShortTimeout.deploy(WAR_PIPELINE, appName, warBundle, DEFAULT_POLLING_INTERVAL_INIT, DEFAULT_POLLING_INTERVAL_MULTIPLIER, 1);
     }
 
     @Test

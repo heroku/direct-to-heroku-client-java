@@ -24,18 +24,21 @@ import java.util.Map;
  */
 public class DirectToHerokuClient {
 
+    public static final String DEFAULT_SCHEME = "https";
+    public static final String DEFAULT_HOST = "direct-to.herokuapp.com";
+    public static final int DEFAULT_PORT = 443;
+    public static final int DEFAULT_POLLING_INTERVAL_INIT = 1000;
+    public static final double DEFAULT_POLLING_INTERVAL_MULTIPLIER = 1.5;
+    public static final long DEFAULT_POLLING_TIMEOUT = 10L * 60L * 1000L;
+
     public static final String STATUS = "status";
     public static final String STATUS_SUCCESS = "success";
     public static final String STATUS_IN_PROCESS = "inprocess";
 
-    private long pollingIntervalInit = 1000;
-    private double pollingIntervalMultiplier = 1.5;
-    private long pollingTimeout = 10L * 60L * 1000L;
-
     private final WebResource baseResource;
 
     public DirectToHerokuClient(String apiKey) {
-        this("https", "direct-to.herokuapp.com", 443, apiKey);
+        this(DEFAULT_SCHEME, DEFAULT_HOST, DEFAULT_PORT, apiKey);
     }
 
     DirectToHerokuClient(String scheme, String host, int port, String apiKey) {
@@ -108,7 +111,11 @@ public class DirectToHerokuClient {
      * @return results from remote service
      * @throws DeploymentException if
      */
-    public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files) throws DeploymentException {
+    public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files) {
+        return deploy(pipelineName, appName, files, DEFAULT_POLLING_INTERVAL_INIT, DEFAULT_POLLING_INTERVAL_MULTIPLIER, DEFAULT_POLLING_TIMEOUT);
+    }
+
+    public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files, long pollingIntervalInit, double pollingIntervalMultiplier, long pollingTimeout) throws DeploymentException {
         final WebResource deployRequest = baseResource.path("/direct/" + appName + "/" + pipelineName);
 
         final FormDataMultiPart form = new FormDataMultiPart();
@@ -162,29 +169,5 @@ public class DirectToHerokuClient {
 
         //noinspection unchecked
         return response;
-    }
-
-    public long getPollingIntervalInit() {
-        return pollingIntervalInit;
-    }
-
-    public void setPollingIntervalInit(long pollingIntervalInit) {
-        this.pollingIntervalInit = pollingIntervalInit;
-    }
-
-    public double getPollingIntervalMultiplier() {
-        return pollingIntervalMultiplier;
-    }
-
-    public void setPollingIntervalMultiplier(double pollingIntervalMultiplier) {
-        this.pollingIntervalMultiplier = pollingIntervalMultiplier;
-    }
-
-    public long getPollingTimeout() {
-        return pollingTimeout;
-    }
-
-    public void setPollingTimeout(long pollingTimeout) {
-        this.pollingTimeout = pollingTimeout;
     }
 }
