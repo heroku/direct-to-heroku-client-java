@@ -118,19 +118,29 @@ public class DirectToHerokuClient {
 
         final ClientResponse deployResponse = deployRequest.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, form);
         if (HttpURLConnection.HTTP_ACCEPTED != deployResponse.getStatus()) {
-            throw new DeploymentException("Deploy not accepted");
+            final String defaultMessage = "Deploy not accepted";
+
+            String customMessage = null;
+            if (MediaType.APPLICATION_JSON_TYPE.equals(deployResponse.getType())) {
+                final Map body = deployResponse.getEntity(Map.class);
+                if (body.containsKey("message")) {
+                    customMessage = body.get("message").toString();
+                }
+            }
+
+            throw new DeploymentException(customMessage != null ? customMessage : defaultMessage, deployResponse.getEntity(String.class));
         }
 
         final List<String> locationHeaders = deployResponse.getHeaders().get("Location");
         if (locationHeaders == null || locationHeaders.get(0) == null) {
             throw new DeploymentException("Location header not found");
         }
-        final String location = locationHeaders.get(0);
+        final String pollingUrl = locationHeaders.get(0);
+        final WebResource pollingRequest = baseResource.path(pollingUrl);
 
-        final long startTime = System.currentTimeMillis();
-        long pollingInterval = pollingIntervalInit;
-        final WebResource pollingRequest = baseResource.path(location);
         Map response = deployResponse.getEntity(Map.class);
+        long pollingInterval = pollingIntervalInit;
+        final long startTime = System.currentTimeMillis();
         while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
             response = pollingRequest.get(Map.class);
 

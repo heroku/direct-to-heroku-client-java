@@ -77,6 +77,13 @@ public class DirectToHerokuClientTest {
     }
 
     @Test
+    public void testDeploy_InvalidRequiredFiles() throws Exception {
+        exceptionRule.expect(DeploymentException.class);
+        exceptionRule.expectMessage("fatjar requires the following file params:jar, procfile");
+        client.deploy(FATJAR_PIPELINE, appName, warBundle);
+    }
+
+    @Test
     public void testDeploy_WithoutTimeout() throws Exception {
         DirectToHerokuClient clientWithShortTimeout = new DirectToHerokuClient(apiKey);
         clientWithShortTimeout.setPollingTimeout(1);
@@ -108,7 +115,7 @@ public class DirectToHerokuClientTest {
         exceptionRule.expectMessage("Required file not specified: jar (the fat jar)");
         exceptionRule.expectMessage("Required file not specified: procfile (The Procfile)");
         exceptionRule.expectMessage("File not found for: meaningless (i'm not really here)");
-        client.verify("fatjar", "", files);
+        client.verify(FATJAR_PIPELINE, "", files);
     }
 
     private Map<String, File> createWarBundle(String warFilePath) {
