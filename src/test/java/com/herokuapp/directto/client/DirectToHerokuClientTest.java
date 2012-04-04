@@ -52,6 +52,15 @@ public class DirectToHerokuClientTest {
     }
 
     @Test
+    public void testDeploy_NoApiKeySet() throws Exception {
+        final DirectToHerokuClient clientWithNoApiKeySet = new DirectToHerokuClient("");
+
+        exceptionRule.expect(DeploymentException.class);
+        exceptionRule.expectMessage("Unable to get user info");
+        clientWithNoApiKeySet.deploy(WAR_PIPELINE, appName, warBundle);
+    }
+
+    @Test
     public void testDeploy_NoAccessToApp() throws Exception {
         exceptionRule.expect(DeploymentException.class);
         exceptionRule.expectMessage("not part of app");
