@@ -1,13 +1,14 @@
-A Java client for directly pushing artifacts to [Direct-to-Heroku](https://github.com/heroku/direct-to).
+A Java client for directly pushing artifacts Heroku via [Direct-to-Heroku](https://github.com/heroku/direct-to).
 
 Setup
 -----
 Include as a dependency:
 
-    <groupId>com.herokuapp.directto</groupId>
-    <artifactId>direct-to-heroku-client</artifactId>
-    <version>0.2-SNAPSHOT</version>
-
+    <dependency>
+        <groupId>com.herokuapp.directto</groupId>
+        <artifactId>direct-to-heroku-client</artifactId>
+        <version>0.2-SNAPSHOT</version>
+    </dependency>
 Usage
 -----
 Example of pushing a war file:
@@ -22,6 +23,16 @@ Example of pushing a war file:
     // Deploy!
     client.deploy("war", appName, files);
 
+
+Running Tests
+-------------
+When running tests be sure to set system properties for test fixtures:
+ * heroku.apiKey
+ * heroku.appName
+
+For example:
+
+    mvn test -Dheroku.apiKey=1234 -Dheroku.appName=app-used-for-fixture
 
 Heroku API JAR Cohabitation
 ---------------------------

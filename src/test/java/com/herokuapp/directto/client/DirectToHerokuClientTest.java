@@ -21,8 +21,8 @@ public class DirectToHerokuClientTest {
     public static final String WAR_PIPELINE = "war";
     public static final String FATJAR_PIPELINE = "fatjar";
 
-    private final String apiKey = System.getProperty("heroku.apiKey");
-    private final String appName = System.getProperty("heroku.appName");
+    private final String apiKey = getSystemPropertyOrThrow("heroku.apiKey");
+    private final String appName = getSystemPropertyOrThrow("heroku.appName");
     private final Map<String, File> warBundle = createWarBundle(ClassLoader.getSystemResource("sample-war.war").getPath());
     private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
 
@@ -119,6 +119,14 @@ public class DirectToHerokuClientTest {
         files.put("war", warFile);
 
         return Collections.unmodifiableMap(files);
+    }
+
+    private String getSystemPropertyOrThrow(String key) {
+        if (System.getProperty(key) != null) {
+            return System.getProperty(key);
+        } else {
+            throw new IllegalStateException("System property [" + key + "] not set. Be sure to set properties when running tests.");
+        }
     }
 }
 
