@@ -27,7 +27,7 @@ public class DirectToHerokuClientTest {
     private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
 
     @Rule
-    public final ExpectedException exceptionRule = ExpectedException.none();
+    public final ExpectedException exceptions = ExpectedException.none();
 
     @Test
     public void testGetPipelineNames() throws Exception {
@@ -55,15 +55,15 @@ public class DirectToHerokuClientTest {
     public void testDeploy_NoApiKeySet() throws Exception {
         final DirectToHerokuClient clientWithNoApiKeySet = new DirectToHerokuClient("");
 
-        exceptionRule.expect(DeploymentException.class);
-        exceptionRule.expectMessage("Unable to get user info");
+        exceptions.expect(DeploymentException.class);
+        exceptions.expectMessage("Unable to get user info");
         clientWithNoApiKeySet.deploy(WAR_PIPELINE, appName, warBundle);
     }
 
     @Test
     public void testDeploy_NoAccessToApp() throws Exception {
-        exceptionRule.expect(DeploymentException.class);
-        exceptionRule.expectMessage("not part of app");
+        exceptions.expect(DeploymentException.class);
+        exceptions.expectMessage("not part of app");
         client.deploy(WAR_PIPELINE, UUID.randomUUID().toString(), warBundle);
     }
 
@@ -71,15 +71,15 @@ public class DirectToHerokuClientTest {
     public void testDeploy_BadResponse() throws Exception {
         final DirectToHerokuClient badClient = new DirectToHerokuClient("http", "example.com", 80, apiKey);
 
-        exceptionRule.expect(DeploymentException.class);
-        exceptionRule.expectMessage("Deploy not accepted");
+        exceptions.expect(DeploymentException.class);
+        exceptions.expectMessage("Deploy not accepted");
         badClient.deploy(WAR_PIPELINE, appName, warBundle);
     }
 
     @Test
     public void testDeploy_InvalidRequiredFiles() throws Exception {
-        exceptionRule.expect(DeploymentException.class);
-        exceptionRule.expectMessage("fatjar requires the following file params:jar, procfile");
+        exceptions.expect(DeploymentException.class);
+        exceptions.expectMessage("fatjar requires the following file params:jar, procfile");
         client.deploy(FATJAR_PIPELINE, appName, warBundle);
     }
 
@@ -88,8 +88,8 @@ public class DirectToHerokuClientTest {
         DirectToHerokuClient clientWithShortTimeout = new DirectToHerokuClient(apiKey);
         clientWithShortTimeout.setPollingTimeout(1);
 
-        exceptionRule.expect(DeploymentException.class);
-        exceptionRule.expectMessage("Polling timed out");
+        exceptions.expect(DeploymentException.class);
+        exceptions.expectMessage("Polling timed out");
         clientWithShortTimeout.deploy(WAR_PIPELINE, appName, warBundle);
     }
 
@@ -100,8 +100,8 @@ public class DirectToHerokuClientTest {
 
     @Test
     public void testVerify_InvalidPipelineName() throws Exception {
-        exceptionRule.expect(VerificationException.class);
-        exceptionRule.expectMessage("[Invalid pipeline name");
+        exceptions.expect(VerificationException.class);
+        exceptions.expectMessage("[Invalid pipeline name");
         client.verify("BAD_PIPELINE_NAME", "anApp", warBundle);
     }
 
@@ -110,11 +110,11 @@ public class DirectToHerokuClientTest {
         final HashMap<String, File> files = new HashMap<String, File>();
         files.put("meaningless", new File("i'm not really here"));
 
-        exceptionRule.expect(VerificationException.class);
-        exceptionRule.expectMessage("App name must be populated");
-        exceptionRule.expectMessage("Required file not specified: jar (the fat jar)");
-        exceptionRule.expectMessage("Required file not specified: procfile (The Procfile)");
-        exceptionRule.expectMessage("File not found for: meaningless (i'm not really here)");
+        exceptions.expect(VerificationException.class);
+        exceptions.expectMessage("App name must be populated");
+        exceptions.expectMessage("Required file not specified: jar (the fat jar)");
+        exceptions.expectMessage("Required file not specified: procfile (The Procfile)");
+        exceptions.expectMessage("File not found for: meaningless (i'm not really here)");
         client.verify(FATJAR_PIPELINE, "", files);
     }
 
