@@ -18,13 +18,14 @@ import static org.junit.Assert.assertTrue;
 public class DirectToHerokuClientTest {
 
     public static final String WAR_PIPELINE = "war";
+    public static final String TARGZ_PIPELINE = "targz";
     public static final String FATJAR_PIPELINE = "fatjar";
 
     private final String apiKey = getSystemPropertyOrThrow("heroku.apiKey");
     private final String appName = getSystemPropertyOrThrow("heroku.appName");
     private final Map<String, File> warBundle = createWarBundle(ClassLoader.getSystemResource("sample-war.war").getPath());
-    private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
 
+    private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
     @Rule
     public final ExpectedException exceptions = ExpectedException.none();
 
@@ -101,6 +102,47 @@ public class DirectToHerokuClientTest {
         exceptions.expect(VerificationException.class);
         exceptions.expectMessage("[Invalid pipeline name");
         client.verify("BAD_PIPELINE_NAME", "anApp", warBundle);
+    }
+
+    @Test
+    public void testVerify_Targz_NonEmptyProcfile() throws Exception {
+        final HashMap<String, File> files = new HashMap<String, File>();
+        files.put("targz", File.createTempFile("some", "targz"));
+        files.put("procfile", new File(ClassLoader.getSystemResource("Procfile").getPath()));
+
+        client.verify(TARGZ_PIPELINE, appName, files);
+    }
+
+    @Test
+    public void testVerify_Targz_EmptyProcfile() throws Exception {
+        final HashMap<String, File> files = new HashMap<String, File>();
+        files.put("targz", File.createTempFile("some", "targz"));
+        files.put("procfile", File.createTempFile("empty", "Procfile"));
+
+        exceptions.expect(VerificationException.class);
+        exceptions.expectMessage("Procfile must not be empty");
+        client.verify(TARGZ_PIPELINE, appName, files);
+    }
+
+    @Test
+    public void testVerify_TwoArtifactsWithSameName() throws Exception {
+        final File sameFile = File.createTempFile("same", "name");
+        final HashMap<String, File> files = new HashMap<String, File>();
+        files.put("targz", sameFile);
+        files.put("procfile", sameFile);
+
+        exceptions.expect(VerificationException.class);
+        exceptions.expectMessage("All files must be unique");
+        client.verify(TARGZ_PIPELINE, appName, files);
+    }
+
+    @Test
+    public void testVerify_TwoArtifactsWithDifferentNames() throws Exception {
+        final HashMap<String, File> files = new HashMap<String, File>();
+        files.put("targz", File.createTempFile("some", "targz"));
+        files.put("procfile", new File(ClassLoader.getSystemResource("Procfile").getPath()));
+
+        client.verify(TARGZ_PIPELINE, appName, files);
     }
 
     @Test

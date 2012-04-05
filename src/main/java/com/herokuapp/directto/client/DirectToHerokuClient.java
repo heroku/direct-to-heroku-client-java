@@ -14,8 +14,12 @@ import com.sun.jersey.multipart.file.FileDataBodyPart;
 
 import javax.ws.rs.core.MediaType;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +99,29 @@ public class DirectToHerokuClient {
             if (file.getValue() == null || !file.getValue().exists()) {
                 problems.addMessage("File not found for: " + file.getKey() + " (" + file.getValue() + ")");
             }
+        }
+
+        if (new HashSet<File>(files.values()).size() != files.size()) {
+            problems.addMessage("All files must be unique");
+        }
+
+        if (files.containsKey("procfile")) {
+            InputStream in = null;
+            try {
+                in = new FileInputStream(files.get("procfile"));
+                if (in.read() == -1) {
+                    problems.addMessage("Procfile must not be empty");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                try {
+                    if (in != null) in.close();
+                } catch (IOException e) {
+                    // swallow
+                }
+            }
+
         }
 
         problems.detonate();
