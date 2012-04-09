@@ -48,6 +48,7 @@ public class DirectToHerokuClient {
     DirectToHerokuClient(String scheme, String host, int port, String apiKey) {
         final ClientConfig config = new DefaultClientConfig();
         config.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+        config.getProperties().put(ClientConfig.PROPERTY_CHUNKED_ENCODING_SIZE, -1 /* default chunk size */);
 
         final Client jerseyClient = Client.create(config);
         jerseyClient.addFilter(new HTTPBasicAuthFilter("", apiKey));
