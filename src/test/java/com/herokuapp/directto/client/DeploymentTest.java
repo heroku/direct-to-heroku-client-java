@@ -1,50 +1,18 @@
 package com.herokuapp.directto.client;
 
-import com.herokuapp.directto.client.models.Pipeline;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.UUID;
 
 import static com.herokuapp.directto.client.DirectToHerokuClient.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Ryan Brainard
  */
-public class DirectToHerokuClientTest {
-
-    public static final String WAR_PIPELINE = "war";
-    public static final String TARGZ_PIPELINE = "targz";
-    public static final String FATJAR_PIPELINE = "fatjar";
-
-    private final String apiKey = getSystemPropertyOrThrow("heroku.apiKey");
-    private final String appName = getSystemPropertyOrThrow("heroku.appName");
-    private final Map<String, File> warBundle = createWarBundle(ClassLoader.getSystemResource("sample-war.war").getPath());
-
-    private final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
-    @Rule
-    public final ExpectedException exceptions = ExpectedException.none();
-
-    @Test
-    public void testGetPipelineNames() throws Exception {
-        final Collection<String> pipelineNames = client.getPipelineNames();
-        assertTrue(pipelineNames.contains(WAR_PIPELINE));
-        assertTrue(pipelineNames.contains(FATJAR_PIPELINE));
-    }
-
-    @Test
-    public void testGetPipeline() throws Exception {
-        final Pipeline pipeline = client.getPipeline(WAR_PIPELINE);
-        assertEquals(WAR_PIPELINE, pipeline.getName());
-        assertEquals("POST", pipeline.getCall().getMethod());
-        assertEquals("/direct/<your app>/war", pipeline.getCall().getUrl());
-        assertEquals("Directly deploy a war that will be executed with tomcat runner", pipeline.getManifest().getDescription());
-        assertEquals("The war file to be deployed alongside tomcat runner", pipeline.getManifest().getRequiredFileInfo().get("war"));
-    }
+public class DeploymentTest extends DirectToHerokuClientBaseTest {
 
     @Test
     public void testDeploy() throws Exception {
@@ -158,22 +126,5 @@ public class DirectToHerokuClientTest {
         client.verify(FATJAR_PIPELINE, "", files);
     }
 
-    private Map<String, File> createWarBundle(String warFilePath) {
-        final File warFile = new File(warFilePath);
-        assertTrue("Precondition", warFile.exists());
-
-        final Map<String, File> files = new HashMap<String, File>(1);
-        files.put("war", warFile);
-
-        return Collections.unmodifiableMap(files);
-    }
-
-    private String getSystemPropertyOrThrow(String key) {
-        if (System.getProperty(key) != null) {
-            return System.getProperty(key);
-        } else {
-            throw new IllegalStateException("System property [" + key + "] not set. Be sure to set properties when running tests.");
-        }
-    }
 }
 
