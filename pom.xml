@@ -6,7 +6,7 @@
 
     <groupId>com.herokuapp.directto</groupId>
     <artifactId>direct-to-heroku-client</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
     <properties>
         <com.sun.jersey.version>1.8</com.sun.jersey.version>
