@@ -21,7 +21,7 @@ public class DeploymentTest extends DirectToHerokuClientBaseTest {
 
     @Test
     public void testDeploy_NoApiKeySet() throws Exception {
-        final DirectToHerokuClient clientWithNoApiKeySet = new DirectToHerokuClient("");
+        final DirectToHerokuClient clientWithNoApiKeySet = new Builder().setApiKey("").build();
 
         exceptions.expect(DeploymentException.class);
         exceptions.expectMessage("Unable to get user info");
@@ -37,7 +37,7 @@ public class DeploymentTest extends DirectToHerokuClientBaseTest {
 
     @Test
     public void testDeploy_BadResponse() throws Exception {
-        final DirectToHerokuClient badClient = new DirectToHerokuClient("http", "example.com", 80, apiKey);
+        final DirectToHerokuClient badClient = new Builder().setScheme("http").setHost("example.com").setPort(80).setApiKey(apiKey).build();
 
         exceptions.expect(DeploymentException.class);
         exceptions.expectMessage("Deploy not accepted");
@@ -53,7 +53,7 @@ public class DeploymentTest extends DirectToHerokuClientBaseTest {
 
     @Test
     public void testDeploy_WithoutTimeout() throws Exception {
-        DirectToHerokuClient clientWithShortTimeout = new DirectToHerokuClient(apiKey);
+        DirectToHerokuClient clientWithShortTimeout = new Builder().setApiKey(apiKey).build();
 
         exceptions.expect(DeploymentException.class);
         exceptions.expectMessage("Polling timed out");

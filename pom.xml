@@ -29,7 +29,7 @@
             <version>${com.sun.jersey.version}</version>
         </dependency>
 
-        <!-- Test Dependecies -->
+        <!-- Test Dependencies -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -38,17 +38,26 @@
         </dependency>
     </dependencies>
 
-		<build>
-			<pluginManagement>
-				<plugins>
-					<plugin>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<configuration>
-							<target>1.5</target>
-							<source>1.5</source>
-						</configuration>
-					</plugin>
-				</plugins>
-			</pluginManagement>
-		</build>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <target>1.5</target>
+                        <source>1.5</source>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <resources>
+            <resource>
+                <directory>${basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
 </project>

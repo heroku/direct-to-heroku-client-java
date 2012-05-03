@@ -23,7 +23,7 @@ public abstract class DirectToHerokuClientBaseTest {
     protected final String appName = getSystemPropertyOrThrow("heroku.appName");
     protected final Map<String, File> warBundle = createWarBundle(ClassLoader.getSystemResource("sample-war.war").getPath());
 
-    protected final DirectToHerokuClient client = new DirectToHerokuClient(apiKey);
+    protected final DirectToHerokuClient client = new DirectToHerokuClient.Builder().setApiKey(apiKey).build();
     @Rule
     public final ExpectedException exceptions = ExpectedException.none();
 

@@ -41,19 +41,16 @@ public class DirectToHerokuClient {
 
     private final WebResource baseResource;
 
-    public DirectToHerokuClient(String apiKey) {
-        this(DEFAULT_SCHEME, DEFAULT_HOST, DEFAULT_PORT, apiKey);
-    }
-
-    DirectToHerokuClient(String scheme, String host, int port, String apiKey) {
+    private DirectToHerokuClient(Builder builder) {
         final ClientConfig config = new DefaultClientConfig();
         config.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         config.getProperties().put(ClientConfig.PROPERTY_CHUNKED_ENCODING_SIZE, -1 /* default chunk size */);
 
         final Client jerseyClient = Client.create(config);
-        jerseyClient.addFilter(new HTTPBasicAuthFilter("", apiKey));
+        jerseyClient.addFilter(new HTTPBasicAuthFilter("", builder.apiKey));
+        jerseyClient.addFilter(new UserAgentFilter(builder.consumersUserAgent));
 
-        baseResource = jerseyClient.resource(scheme + "://" + host + ":" + port);
+        baseResource = jerseyClient.resource(builder.scheme + "://" + builder.host + ":" + builder.port);
     }
 
     /**
@@ -197,5 +194,43 @@ public class DirectToHerokuClient {
 
         //noinspection unchecked
         return response;
+    }
+
+    public static final class Builder {
+
+        private String scheme = DEFAULT_SCHEME;
+        private String host = DEFAULT_HOST;
+        private int port = DEFAULT_PORT;
+        private String apiKey;
+        public String consumersUserAgent;
+
+        public Builder setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
+
+        public Builder setScheme(String scheme) {
+            this.scheme = scheme;
+            return this;
+        }
+
+        public Builder setHost(String host) {
+            this.host = host;
+            return this;
+        }
+
+        public Builder setPort(int port) {
+            this.port = port;
+            return this;
+        }
+
+        public Builder setConsumersUserAgent(String consumersUserAgent) {
+            this.consumersUserAgent = consumersUserAgent;
+            return this;
+        }
+
+        public DirectToHerokuClient build() {
+            return new DirectToHerokuClient(this);
+        }
     }
 }
