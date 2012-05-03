@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Ryan Brainard
  */
-public class DeploymentLoadTest extends DirectToHerokuClientBaseTest {
+public class DeploymentLoadIT extends DirectToHerokuClientBaseTest {
 
     @Test
     public void testLargeUpload() throws Exception {
