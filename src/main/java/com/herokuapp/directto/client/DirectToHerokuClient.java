@@ -141,14 +141,18 @@ public class DirectToHerokuClient {
     }
 
     public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files, long pollingIntervalInit, double pollingIntervalMultiplier, long pollingTimeout) throws DeploymentException {
-        final WebResource deployRequest = baseResource.path("/direct/" + appName + "/" + pipelineName);
+        return poll(upload(pipelineName, appName, files), pollingIntervalInit, pollingIntervalMultiplier, pollingTimeout);
+    }
+
+    protected ClientResponse upload(String pipelineName, String appName, Map<String, File> files) throws DeploymentException {
+        final WebResource uploadRequest = baseResource.path("/direct/" + appName + "/" + pipelineName);
 
         final FormDataMultiPart form = new FormDataMultiPart();
         for (Map.Entry<String, File> file : files.entrySet()) {
             form.bodyPart(new FileDataBodyPart(file.getKey(), file.getValue()));
         }
 
-        final ClientResponse deployResponse = deployRequest.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, form);
+        final ClientResponse deployResponse = uploadRequest.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, form);
         if (HttpURLConnection.HTTP_ACCEPTED != deployResponse.getStatus()) {
             final String defaultMessage = "Deploy not accepted";
 
@@ -162,15 +166,18 @@ public class DirectToHerokuClient {
 
             throw new DeploymentException(customMessage != null ? customMessage : defaultMessage, deployResponse.getEntity(String.class));
         }
+        return deployResponse;
+    }
 
-        final List<String> locationHeaders = deployResponse.getHeaders().get("Location");
+    protected Map<String, String> poll(ClientResponse uploadResponse, long pollingIntervalInit, double pollingIntervalMultiplier, long pollingTimeout) {
+        final List<String> locationHeaders = uploadResponse.getHeaders().get("Location");
         if (locationHeaders == null || locationHeaders.get(0) == null) {
             throw new DeploymentException("Location header not found");
         }
         final String pollingUrl = locationHeaders.get(0);
         final WebResource pollingRequest = baseResource.path(pollingUrl);
 
-        Map response = deployResponse.getEntity(Map.class);
+        Map response = uploadResponse.getEntity(Map.class);
         long pollingInterval = pollingIntervalInit;
         final long startTime = System.currentTimeMillis();
         while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
