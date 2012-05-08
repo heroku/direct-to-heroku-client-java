@@ -24,14 +24,14 @@ public class DeploymentTest extends DirectToHerokuClientBaseTest {
         final DirectToHerokuClient clientWithNoApiKeySet = new Builder().setApiKey("").build();
 
         exceptions.expect(DeploymentException.class);
-        exceptions.expectMessage("Unable to get user info");
+        exceptions.expectMessage("API key must be provided for user with access to app");
         clientWithNoApiKeySet.deploy(WAR_PIPELINE, appName, warBundle);
     }
 
     @Test
     public void testDeploy_NoAccessToApp() throws Exception {
         exceptions.expect(DeploymentException.class);
-        exceptions.expectMessage("not part of app");
+        exceptions.expectMessage("API key must be provided for user with access to app");
         client.deploy(WAR_PIPELINE, UUID.randomUUID().toString(), warBundle);
     }
 

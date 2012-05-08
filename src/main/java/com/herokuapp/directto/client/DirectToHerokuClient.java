@@ -152,21 +152,21 @@ public class DirectToHerokuClient {
             form.bodyPart(new FileDataBodyPart(file.getKey(), file.getValue()));
         }
 
-        final ClientResponse deployResponse = uploadRequest.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, form);
-        if (HttpURLConnection.HTTP_ACCEPTED != deployResponse.getStatus()) {
+        final ClientResponse uploadResponse = uploadRequest.type(MediaType.MULTIPART_FORM_DATA_TYPE).post(ClientResponse.class, form);
+        if (HttpURLConnection.HTTP_ACCEPTED != uploadResponse.getStatus()) {
             final String defaultMessage = "Deploy not accepted";
 
             String customMessage = null;
-            if (MediaType.APPLICATION_JSON_TYPE.equals(deployResponse.getType())) {
-                final Map body = deployResponse.getEntity(Map.class);
+            if (MediaType.APPLICATION_JSON_TYPE.isCompatible(uploadResponse.getType())) {
+                final Map body = uploadResponse.getEntity(Map.class);
                 if (body.containsKey("message")) {
                     customMessage = body.get("message").toString();
                 }
             }
 
-            throw new DeploymentException(customMessage != null ? customMessage : defaultMessage, deployResponse.getEntity(String.class));
+            throw new DeploymentException(customMessage != null ? customMessage : defaultMessage, uploadResponse.getEntity(String.class));
         }
-        return deployResponse;
+        return uploadResponse;
     }
 
     protected Map<String, String> poll(ClientResponse uploadResponse, long pollingIntervalInit, double pollingIntervalMultiplier, long pollingTimeout) {
