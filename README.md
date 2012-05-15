@@ -7,7 +7,7 @@ Include as a dependency:
     <dependency>
         <groupId>com.herokuapp.directto</groupId>
         <artifactId>direct-to-heroku-client</artifactId>
-        <version>0.4-SNAPSHOT</version>
+        <version>0.4-BETA</version>
     </dependency>
 Usage
 -----
