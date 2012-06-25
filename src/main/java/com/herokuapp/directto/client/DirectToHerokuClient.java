@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.HashSet;
@@ -177,11 +178,11 @@ public class DirectToHerokuClient {
         final String pollingUrl = locationHeaders.get(0);
         final WebResource pollingRequest = baseResource.path(pollingUrl);
 
-        Map response = uploadResponse.getEntity(Map.class);
+        Map<String, String> response = stringify(uploadResponse.getEntity(Map.class));
         long pollingInterval = pollingIntervalInit;
         final long startTime = System.currentTimeMillis();
         while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
-            response = pollingRequest.get(Map.class);
+            response = stringify(pollingRequest.get(Map.class));
 
             if (System.currentTimeMillis() - startTime > pollingTimeout) {
                 throw new DeploymentException("Polling timed out after " + pollingInterval + "ms");
@@ -199,8 +200,27 @@ public class DirectToHerokuClient {
             throw new DeploymentException(unsuccessfulMsg, response.toString());
         }
 
-        //noinspection unchecked
         return response;
+    }
+
+    private static Map<String, String> stringify(Map<?, ?> anyMap) {
+        Map<String, String> stringMap = null;
+        try {
+            //noinspection unchecked
+            stringMap = anyMap.getClass().getConstructor(int.class).newInstance(anyMap.size());
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        for (Map.Entry entry : anyMap.entrySet()) {
+            stringMap.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+        }
+        return stringMap;
     }
 
     public static final class Builder {
