@@ -6,7 +6,7 @@
 
     <groupId>com.herokuapp.directto</groupId>
     <artifactId>direct-to-heroku-client</artifactId>
-    <version>0.4-BETA</version>
+    <version>0.5-BETA</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
