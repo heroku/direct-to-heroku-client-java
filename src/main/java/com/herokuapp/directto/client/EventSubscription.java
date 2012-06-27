@@ -1,10 +1,6 @@
 package com.herokuapp.directto.client;
 
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.*;
 
 /**
  * @author Ryan Brainard
@@ -25,7 +21,7 @@ public final class EventSubscription {
         void handle(Event event);
     }
 
-    private final Map<Event, Set<Subscriber>> subscribers = new ConcurrentHashMap<Event, Set<Subscriber>>();
+    private final Map<Event, Set<Subscriber>> subscribers = new EnumMap<Event, Set<Subscriber>>(Event.class);
 
     void announce(Event event) {
         if (subscribers.containsKey(event)) {
@@ -42,7 +38,7 @@ public final class EventSubscription {
     public EventSubscription subscribe(EnumSet<Event> events, Subscriber subscriber) {
         for (Event event : events) {
             if (!subscribers.containsKey(event)) {
-                subscribers.put(event, new CopyOnWriteArraySet<Subscriber>());
+                subscribers.put(event, new HashSet<Subscriber>());
             }
             subscribers.get(event).add(subscriber);
         }
