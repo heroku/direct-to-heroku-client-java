@@ -39,18 +39,23 @@ public class DirectToHerokuClient {
     public static final String STATUS_SUCCESS = "success";
     public static final String STATUS_IN_PROCESS = "inprocess";
 
-    private final WebResource baseResource;
+    private static final Client universalClient;
 
-    private DirectToHerokuClient(Builder builder) {
+    static {
         final ClientConfig config = new DefaultClientConfig();
         config.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         config.getProperties().put(ClientConfig.PROPERTY_CHUNKED_ENCODING_SIZE, -1 /* default chunk size */);
+        universalClient = Client.create(config);
+    }
 
-        final Client jerseyClient = Client.create(config);
-        jerseyClient.addFilter(new HTTPBasicAuthFilter("", builder.apiKey));
-        jerseyClient.addFilter(new UserAgentFilter(builder.consumersUserAgent));
+    private final WebResource baseResource;
 
-        baseResource = jerseyClient.resource(builder.scheme + "://" + builder.host + ":" + builder.port);
+    private DirectToHerokuClient(Builder builder) {
+        String apiKey = builder.apiKey;
+        String userAgent = builder.consumersUserAgent;
+        baseResource = universalClient.resource(builder.scheme + "://" + builder.host + ":" + builder.port);
+        baseResource.addFilter(new HTTPBasicAuthFilter("", apiKey));
+        baseResource.addFilter(new UserAgentFilter(userAgent));
     }
 
     /**
