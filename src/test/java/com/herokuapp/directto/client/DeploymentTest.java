@@ -1,12 +1,18 @@
 package com.herokuapp.directto.client;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.herokuapp.directto.client.DirectToHerokuClient.*;
+import static com.herokuapp.directto.client.EventSubscription.Event;
+import static com.herokuapp.directto.client.EventSubscription.Event.*;
+import static com.herokuapp.directto.client.EventSubscription.Subscriber;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -14,9 +20,23 @@ import static org.junit.Assert.assertEquals;
  */
 public class DeploymentTest extends DirectToHerokuClientBaseTest {
 
+    private Set<Event> recordedEvents;
+    private EventSubscription subscription;
+
+    @Before
+    public void setUp() throws Exception {
+        recordedEvents = EnumSet.noneOf(Event.class);
+        subscription = new EventSubscription().subscribe(EnumSet.allOf(Event.class), new Subscriber() {
+            public void handle(Event event) {
+                recordedEvents.add(event);
+            }
+        });
+    }
+
     @Test
     public void testDeploy() throws Exception {
-        assertEquals(STATUS_SUCCESS, client.deploy(WAR_PIPELINE, appName, warBundle).get(STATUS));
+        assertEquals(STATUS_SUCCESS, client.deploy(new DeployRequest(WAR_PIPELINE, appName, warBundle).setEventSubscription(subscription)).get(STATUS));
+        assertEquals(EnumSet.of(DEPLOY_START, UPLOAD_START, UPLOAD_END, POLL, DEPLOY_END), recordedEvents);
     }
 
     @Test
@@ -57,12 +77,14 @@ public class DeploymentTest extends DirectToHerokuClientBaseTest {
 
         exceptions.expect(DeploymentException.class);
         exceptions.expectMessage("Polling timed out");
-        clientWithShortTimeout.deploy(WAR_PIPELINE, appName, warBundle, DEFAULT_POLLING_INTERVAL_INIT, DEFAULT_POLLING_INTERVAL_MULTIPLIER, 1);
+        clientWithShortTimeout.deploy(new DeployRequest(WAR_PIPELINE, appName, warBundle).setPollingTimeout(1));
     }
 
     @Test
     public void testVerify_Pass() throws Exception {
         client.verify(WAR_PIPELINE, appName, warBundle);
+        client.verify(new DeployRequest(WAR_PIPELINE, appName, warBundle).setEventSubscription(subscription));
+        assertEquals(EnumSet.of(DEPLOY_PRE_VERIFICATION_START, DEPLOY_PRE_VERIFICATION_END), recordedEvents);
     }
 
     @Test

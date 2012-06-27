@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import static com.herokuapp.directto.client.EventSubscription.Event.*;
+
 /**
  * @author Ryan Brainard
  */
@@ -32,9 +34,6 @@ public class DirectToHerokuClient {
     public static final String DEFAULT_SCHEME = "https";
     public static final String DEFAULT_HOST = "direct-to.herokuapp.com";
     public static final int DEFAULT_PORT = 443;
-    public static final int DEFAULT_POLLING_INTERVAL_INIT = 1000;
-    public static final double DEFAULT_POLLING_INTERVAL_MULTIPLIER = 1.5;
-    public static final long DEFAULT_POLLING_TIMEOUT = 10L * 60L * 1000L;
 
     public static final String STATUS = "status";
     public static final String STATUS_SUCCESS = "success";
@@ -75,39 +74,45 @@ public class DirectToHerokuClient {
      * @throws VerificationException when a verification issue is found
      */
     public void verify(String pipelineName, String appName, Map<String, File> files) throws VerificationException {
+        verify(new DeployRequest(pipelineName, appName, files));
+    }
+
+    public void verify(DeployRequest deployRequest) throws VerificationException {
+        deployRequest.getEventSubscription().announce(DEPLOY_PRE_VERIFICATION_START);
+
         final VerificationException.Aggregator problems = new VerificationException.Aggregator();
 
-        if (appName == null || appName.trim().equals("")) {
+        if (deployRequest.getAppName() == null || deployRequest.getAppName().trim().equals("")) {
             problems.addMessage("App name must be populated");
         }
 
         Pipeline pipeline = null;
         try {
-            pipeline = getPipeline(pipelineName);
+            pipeline = getPipeline(deployRequest.getPipelineName());
         } catch (UniformInterfaceException e) {
-            problems.addMessage("Invalid pipeline name: " + pipelineName).detonate();
+            problems.addMessage("Invalid pipeline name: " + deployRequest.getPipelineName()).detonate();
         }
 
         for (Map.Entry<String, String> requiredFile : pipeline.getManifest().getRequiredFileInfo().entrySet()) {
-            if (!files.containsKey(requiredFile.getKey())) {
+            if (!deployRequest.getFiles().containsKey(requiredFile.getKey())) {
                 problems.addMessage("Required file not specified: " + requiredFile.getKey() + " (" + requiredFile.getValue() + ")");
             }
         }
 
-        for (Map.Entry<String, File> file : files.entrySet()) {
+        for (Map.Entry<String, File> file : deployRequest.getFiles().entrySet()) {
             if (file.getValue() == null || !file.getValue().exists()) {
                 problems.addMessage("File not found for: " + file.getKey() + " (" + file.getValue() + ")");
             }
         }
 
-        if (new HashSet<File>(files.values()).size() != files.size()) {
+        if (new HashSet<File>(deployRequest.getFiles().values()).size() != deployRequest.getFiles().size()) {
             problems.addMessage("All files must be unique");
         }
 
-        if (files.containsKey("procfile")) {
+        if (deployRequest.getFiles().containsKey("procfile")) {
             InputStream in = null;
             try {
-                in = new FileInputStream(files.get("procfile"));
+                in = new FileInputStream(deployRequest.getFiles().get("procfile"));
                 if (in.read() == -1) {
                     problems.addMessage("Procfile must not be empty");
                 }
@@ -124,6 +129,8 @@ public class DirectToHerokuClient {
         }
 
         problems.detonate();
+
+        deployRequest.getEventSubscription().announce(DEPLOY_PRE_VERIFICATION_END);
     }
 
     /**
@@ -138,18 +145,23 @@ public class DirectToHerokuClient {
      * @throws DeploymentException if
      */
     public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files) {
-        return deploy(pipelineName, appName, files, DEFAULT_POLLING_INTERVAL_INIT, DEFAULT_POLLING_INTERVAL_MULTIPLIER, DEFAULT_POLLING_TIMEOUT);
+        return deploy(new DeployRequest(pipelineName, appName, files));
     }
 
-    public Map<String, String> deploy(String pipelineName, String appName, Map<String, File> files, long pollingIntervalInit, double pollingIntervalMultiplier, long pollingTimeout) throws DeploymentException {
-        return poll(upload(pipelineName, appName, files), pollingIntervalInit, pollingIntervalMultiplier, pollingTimeout);
+    public Map<String, String> deploy(DeployRequest deployRequest) {
+        deployRequest.getEventSubscription().announce(DEPLOY_START);
+        final Map<String, String> result = poll(deployRequest, upload(deployRequest));
+        deployRequest.getEventSubscription().announce(DEPLOY_END);
+        return result;
     }
 
-    protected ClientResponse upload(String pipelineName, String appName, Map<String, File> files) throws DeploymentException {
-        final WebResource uploadRequest = baseResource.path("/direct/" + appName + "/" + pipelineName);
+    protected ClientResponse upload(DeployRequest deployRequest) throws DeploymentException {
+        deployRequest.getEventSubscription().announce(UPLOAD_START);
+
+        final WebResource uploadRequest = baseResource.path("/direct/" + deployRequest.getAppName() + "/" + deployRequest.getPipelineName());
 
         final FormDataMultiPart form = new FormDataMultiPart();
-        for (Map.Entry<String, File> file : files.entrySet()) {
+        for (Map.Entry<String, File> file : deployRequest.getFiles().entrySet()) {
             form.bodyPart(new FileDataBodyPart(file.getKey(), file.getValue()));
         }
 
@@ -167,10 +179,12 @@ public class DirectToHerokuClient {
 
             throw new DeploymentException(customMessage != null ? customMessage : defaultMessage, uploadResponse.getEntity(String.class));
         }
+
+        deployRequest.getEventSubscription().announce(UPLOAD_END);
         return uploadResponse;
     }
 
-    protected Map<String, String> poll(ClientResponse uploadResponse, long pollingIntervalInit, double pollingIntervalMultiplier, long pollingTimeout) {
+    protected Map<String, String> poll(DeployRequest deployRequest, ClientResponse uploadResponse) {
         final List<String> locationHeaders = uploadResponse.getHeaders().get("Location");
         if (locationHeaders == null || locationHeaders.get(0) == null) {
             throw new DeploymentException("Location header not found");
@@ -179,17 +193,18 @@ public class DirectToHerokuClient {
         final WebResource pollingRequest = baseResource.path(pollingUrl);
 
         Map<String, String> response = stringify(uploadResponse.getEntity(Map.class));
-        long pollingInterval = pollingIntervalInit;
+        long pollingInterval = deployRequest.getPollingIntervalInit();
         final long startTime = System.currentTimeMillis();
         while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
+            deployRequest.getEventSubscription().announce(POLL);
             response = stringify(pollingRequest.get(Map.class));
 
-            if (System.currentTimeMillis() - startTime > pollingTimeout) {
+            if (System.currentTimeMillis() - startTime > deployRequest.getPollingTimeout()) {
                 throw new DeploymentException("Polling timed out after " + pollingInterval + "ms");
             }
 
             try {
-                Thread.sleep(pollingInterval *= pollingIntervalMultiplier);
+                Thread.sleep(pollingInterval *= deployRequest.getPollingIntervalMultiplier());
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -260,4 +275,5 @@ public class DirectToHerokuClient {
             return new DirectToHerokuClient(this);
         }
     }
+
 }
