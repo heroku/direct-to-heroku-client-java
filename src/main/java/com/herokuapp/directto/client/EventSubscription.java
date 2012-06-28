@@ -13,7 +13,9 @@ public final class EventSubscription {
         DEPLOY_START,
         UPLOAD_START,
         UPLOAD_END,
-        POLL,
+        POLL_START,
+        POLLING,
+        POLL_END,
         DEPLOY_END
     }
 

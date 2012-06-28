@@ -36,7 +36,7 @@ public class DeploymentTest extends DirectToHerokuClientBaseTest {
     @Test
     public void testDeploy() throws Exception {
         assertEquals(STATUS_SUCCESS, client.deploy(new DeployRequest(WAR_PIPELINE, appName, warBundle).setEventSubscription(subscription)).get(STATUS));
-        assertEquals(EnumSet.of(DEPLOY_START, UPLOAD_START, UPLOAD_END, POLL, DEPLOY_END), recordedEvents);
+        assertEquals(EnumSet.of(DEPLOY_START, UPLOAD_START, UPLOAD_END, POLL_START, POLLING, POLL_END, DEPLOY_END), recordedEvents);
     }
 
     @Test

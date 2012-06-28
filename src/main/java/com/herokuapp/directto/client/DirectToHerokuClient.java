@@ -190,6 +190,7 @@ public class DirectToHerokuClient {
     }
 
     protected Map<String, String> poll(DeployRequest deployRequest, ClientResponse uploadResponse) {
+        deployRequest.getEventSubscription().announce(POLL_START);
         final List<String> locationHeaders = uploadResponse.getHeaders().get("Location");
         if (locationHeaders == null || locationHeaders.get(0) == null) {
             throw new DeploymentException("Location header not found");
@@ -201,7 +202,7 @@ public class DirectToHerokuClient {
         long pollingInterval = deployRequest.getPollingIntervalInit();
         final long startTime = System.currentTimeMillis();
         while (STATUS_IN_PROCESS.equals(response.get(STATUS))) {
-            deployRequest.getEventSubscription().announce(POLL);
+            deployRequest.getEventSubscription().announce(POLLING);
             response = stringify(pollingRequest.get(Map.class));
 
             if (System.currentTimeMillis() - startTime > deployRequest.getPollingTimeout()) {
@@ -220,6 +221,7 @@ public class DirectToHerokuClient {
             throw new DeploymentException(unsuccessfulMsg, response.toString());
         }
 
+        deployRequest.getEventSubscription().announce(POLL_END);
         return response;
     }
 
