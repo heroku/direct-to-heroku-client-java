@@ -10,7 +10,7 @@ Include as a dependency:
         <version>${com.herokuapp.directto.version}</version>
     </dependency>
 
-Basic Usage
+Quick Start
 ===========
 Example of pushing a war file:
 
@@ -26,6 +26,13 @@ Example of pushing a war file:
 
 Advanced Usage
 ==============
+
+Pre-Deploy Verification
+-----------------------
+Before deploying optional client-side verification can be performed to alert users of any problems 
+(e.g. files not found, bad pipeline names, etc) prior to pushing the payload to the server. To use this,
+use the `client.verify()` methods that have the same signatures as their cooresponding `client.deploy()` methods.
+A `VerificationException` will be thrown if any problems are found.
 
 Deploy Request
 --------------
@@ -51,7 +58,7 @@ by setting an `EventSubscription` with `Subscription`s for certain events. For e
 
 Consumer User Agent
 -------------------
-When using this library within a larger application, it is recommended to set the User Agent for the consumer application.
+When this library is consumed by a larger application, it is recommended to set the User Agent for the consumer application.
 To do this, call `setConsumersUserAgent()` on `DirectToHerokuClient.Builder`. This will prepend the consumer user agent to
 the full `User-Agent` header along with version information for this library in accordance to RFC 2616 Section 14.43.
 For example, if you set `setConsumersUserAgent("SuperCoolCiSystem/1.0")`, the `User-Agent` header will be something like:
