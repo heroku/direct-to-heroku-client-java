@@ -1,4 +1,4 @@
-** DEPRECATED** This project is no longer supported, and probably doesn't work.
+**DEPRECATED** This project is no longer supported, and probably doesn't work.
 
 A Java client for directly pushing artifacts Heroku via [Direct-to-Heroku](https://github.com/heroku/direct-to).
 
